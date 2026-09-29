@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Voice Studio - Chuyên Gia Tiếng Trung Phổ Thông</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter & Google Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e1b4b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4f46e5;
+        }
+        .glow-indigo {
+            box-shadow: 0 0 20px -3px rgba(99, 102, 241, 0.3);
+        }
+        .glow-pink {
+            box-shadow: 0 0 20px -3px rgba(236, 72, 153, 0.3);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col font-sans overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+    <div class="flex flex-col min-h-screen">
+        <!-- TOP NAV BAR -->
+        <header class="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-indigo-500 to-pink-500 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-microphone-lines text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-200 via-indigo-400 to-pink-400 bg-clip-text text-transparent">
+                        Gemini Voice Studio v2
+                    </h1>
+                    <p class="text-xs text-slate-400">Luyện tiếng Trung Phổ thông (普通话) đa sắc thái & tốc độ tùy chỉnh</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <!-- Status indicator -->
+                <div id="apiStatusBadge" class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Chuẩn 普通话 (Pǔtōnghuà)</span>
+                </div>
+                <!-- Developer Mode custom API Key Input (Optional) -->
+                <div class="relative group">
+                    <button id="toggleSettings" class="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition">
+                        <i class="fa-solid fa-gears"></i>
+                    </button>
+                    <!-- Settings Dropdown -->
+                    <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-80 p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-xl z-50">
+                        <h3 class="text-sm font-semibold mb-2">Cài đặt nâng cao</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Custom API Key (Tùy chọn)</label>
+                                <input type="password" id="customApiKey" placeholder="Bỏ trống để dùng mặc định của Canvas" 
+                                    class="w-full text-xs px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:outline-none focus:border-indigo-500 transition">
+                                <p class="text-[10px] text-slate-500 mt-1">Hệ thống sẽ ưu tiên sử dụng API Key nội bộ của Canvas.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="flex-1 flex flex-col lg:flex-row min-h-0">
+            <!-- LEFT AREA: Editor & Workspace -->
+            <div class="flex-1 flex flex-col p-4 lg:p-6 space-y-6 overflow-y-auto max-w-5xl mx-auto w-full">
+                
+                <!-- NAVIGATION TABS -->
+                <div class="flex space-x-2 p-1.5 bg-slate-900/50 rounded-xl border border-slate-900/80">
+                    <button id="tabSingle" class="flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg bg-indigo-600 text-white font-medium text-sm transition shadow shadow-indigo-600/30">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span>Phát Âm Đơn (Single TTS)</span>
+                    </button>
+                    <button id="tabDialogue" class="flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg text-slate-400 hover:text-white font-medium text-sm transition">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Kịch Bản Đối Thoại Đa Vai</span>
+                    </button>
+                </div>
+
+                <!-- TAB 1: SINGLE SPEAKER -->
+                <div id="panelSingle" class="space-y-6">
+                    <div class="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl glow-indigo">
+                        <h2 class="text-lg font-semibold mb-4 text-slate-200 flex items-center space-x-2">
+                            <span class="w-1.5 h-4 bg-indigo-500 rounded-full"></span>
+                            <span>1. Soạn thảo & Thiết kế giọng phát âm đơn</span>
+                        </h2>
+                        
+                        <!-- Voice Control Settings Box (3 columns: Voice, Emotion, Speed) -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <!-- Voice Selector -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Chọn Giọng AI Tiếng Trung</label>
+                                <div class="relative">
+                                    <select id="singleVoiceSelect" class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl py-3 px-4 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer transition">
+                                        <!-- Will be populated dynamically -->
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                                <p id="voiceDesc" class="text-[11px] text-slate-500 mt-1.5 italic">--</p>
+                            </div>
+
+                            <!-- Emotional / Tone Guide -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Sắc Thái Ngữ Điệu (Mandarin Tone)</label>
+                                <div class="relative">
+                                    <select id="singleToneSelect" class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl py-3 px-4 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer transition">
+                                        <option value="default" data-prompt="Read in standard, clear, and natural Standard Mandarin (普通话) with perfect pronunciation.">Mặc định (Tự nhiên, chuẩn phổ thông)</option>
+                                        <option value="warm" data-prompt="Read in a warm, gentle, mature, and healing Standard Mandarin (普通话) tone, perfect for listening practice.">Trầm ấm, Trưởng thành (成熟治愈)</option>
+                                        <option value="excited" data-prompt="Read in an highly enthusiastic, lively, and energetic Standard Mandarin (普通话) tone.">Năng động, Hào hứng (活泼阳光)</option>
+                                        <option value="serious" data-prompt="Read in a very formal, precise, and authoritative Standard Mandarin (普通话) news broadcasting tone.">Nghiêm túc, Thời sự (新闻播音)</option>
+                                        <option value="playful" data-prompt="Read in a cute, happy, and playful Standard Mandarin (普通话) child-friendly voice.">Tinh nghịch, Đáng yêu (顽皮俏皮)</option>
+                                        <option value="whisper" data-prompt="Read in a soft, gentle, and intimate whispering Standard Mandarin (普通话) tone.">Thì thầm, Nhẹ nhàng (温柔轻声)</option>
+                                        <option value="custom" data-prompt="">Tự định nghĩa sắc thái...</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                                <div id="customToneContainer" class="hidden mt-2">
+                                    <input type="text" id="customToneInput" placeholder="Ví dụ: Giọng giận dữ, nói vấp váp..." 
+                                        class="w-full text-xs bg-slate-950 border border-indigo-900/60 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-indigo-500">
+                                </div>
+                            </div>
+
+                            <!-- AI Synthesis Speed Slider -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Tốc độ đọc của AI (AI Rate)</label>
+                                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col justify-center h-[50px]">
+                                    <div class="flex items-center justify-between">
+                                        <input type="range" id="singleSpeedRange" min="0.5" max="2.0" step="0.1" value="1.0" 
+                                            class="flex-1 accent-indigo-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer mr-3">
+                                        <span id="singleSpeedVal" class="text-xs font-mono font-bold text-indigo-400 min-w-[32px] text-right">1.0x</span>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-1.5">Mô hình AI sẽ tự điều chỉnh ngữ điệu, nhịp điệu thở thích hợp với tốc độ.</p>
+                            </div>
+                        </div>
+
+                        <!-- Text Area Input -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Văn bản tiếng Trung (Chữ Hán, Pinyin & Nghĩa)</label>
+                                <span id="charCount" class="text-xs text-slate-500">0 / 5000 ký tự</span>
+                            </div>
+                            <textarea id="singleText" rows="6" placeholder="Nhập chữ Hán muốn chuyển giọng đọc tại đây..." 
+                                class="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition resize-y">今天星期几？今天星期一。明天你想去学校做什么？我想去学校看书。</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: MULTI-SPEAKER DIALOGUE STUDIO -->
+                <div id="panelDialogue" class="hidden space-y-6">
+                    <!-- Step 1: Manage Cast (Speakers) -->
+                    <div class="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-slate-200 flex items-center space-x-2">
+                                <span class="w-1.5 h-4 bg-pink-500 rounded-full"></span>
+                                <span>1. Quản lý danh sách nhân vật (Cast)</span>
+                            </h2>
+                            <button id="addSpeakerBtn" class="flex items-center space-x-1 text-xs font-semibold bg-pink-600/20 hover:bg-pink-600/40 text-pink-400 border border-pink-500/30 px-3 py-1.5 rounded-lg transition">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Thêm Nhân Vật</span>
+                            </button>
+                        </div>
+
+                        <!-- Speakers Grid -->
+                        <div id="speakersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Dialogue script builder -->
+                    <div class="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl glow-pink">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-slate-200 flex items-center space-x-2">
+                                <span class="w-1.5 h-4 bg-purple-500 rounded-full"></span>
+                                <span>2. Kịch bản đối thoại bằng tiếng Trung</span>
+                            </h2>
+                            <div class="flex space-x-2">
+                                <button id="clearDialogueBtn" class="flex items-center space-x-1 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition border border-slate-700/50">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                    <span>Xóa tất cả</span>
+                                </button>
+                                <button id="addLineBtn" class="flex items-center space-x-1 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition shadow-md shadow-indigo-600/20">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Thêm dòng thoại</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Script lines block -->
+                        <div id="scriptLinesContainer" class="space-y-4">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRIGGER GENERATE ACTION -->
+                <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-slate-900/20 border border-slate-900/60 rounded-xl space-y-3 sm:space-y-0">
+                    <div class="text-xs text-slate-400 flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-info text-indigo-400 animate-pulse"></i>
+                        <span>Mọi âm sắc 普通话 đều được sinh lập trực tiếp thông qua mô hình tts thông minh của Gemini.</span>
+                    </div>
+                    <button id="generateBtn" class="w-full sm:w-auto flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span id="generateBtnText">Bắt đầu chuyển giọng đọc</span>
+                    </button>
+                </div>
+
+                <!-- REALTIME AUDIO PLAYER & WAVEFORM VISUALIZATION -->
+                <div id="audioOutputSection" class="hidden bg-gradient-to-b from-slate-900 to-slate-950 border border-indigo-900/40 p-6 rounded-2xl shadow-xl">
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <!-- Left Panel: Sóng âm visualizer -->
+                        <div class="flex-1 flex flex-col justify-between">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">Kết quả chuyển âm chuẩn</span>
+                                <h3 id="playingTitle" class="text-base font-bold text-white mt-2">--</h3>
+                                <p id="playingMeta" class="text-xs text-slate-400 mt-1">--</p>
+                            </div>
+
+                            <!-- Canvas Visualizer Container -->
+                            <div class="my-4 h-24 bg-slate-950/80 rounded-xl border border-slate-900 overflow-hidden relative flex items-center justify-center">
+                                <canvas id="visualizerCanvas" class="w-full h-full"></canvas>
+                                <div id="noVisualizerActive" class="absolute text-slate-500 text-xs flex items-center space-x-2">
+                                    <i class="fa-solid fa-music animate-pulse"></i>
+                                    <span>Bấm phát nhạc để xem sóng âm chuyển động</span>
+                                </div>
+                            </div>
+
+                            <!-- Audio Controls Group with Playback Speed -->
+                            <div class="flex flex-col md:flex-row md:items-center gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-900/80">
+                                <div class="flex items-center space-x-4">
+                                    <audio id="mainAudio" class="hidden" controls></audio>
+                                    <button id="playPauseBtn" class="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-lg hover:bg-indigo-500 active:scale-95 transition-all shadow-lg shadow-indigo-600/30">
+                                        <i class="fa-solid fa-play" id="playPauseIcon"></i>
+                                    </button>
+                                    
+                                    <!-- Playback Rate Selector (Direct Speed Shift) -->
+                                    <div class="flex flex-col justify-center">
+                                        <span class="text-[9px] uppercase tracking-wider text-slate-500 font-bold">Tốc độ phát âm</span>
+                                        <select id="playbackRateSelect" class="bg-slate-900 border border-slate-800 text-xs text-indigo-400 font-bold rounded px-2 py-1 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                                            <option value="0.5">0.5x (Rất chậm)</option>
+                                            <option value="0.75">0.75x (Chậm)</option>
+                                            <option value="0.9">0.9x (Chậm vừa)</option>
+                                            <option value="1.0" selected>1.0x (Chuẩn)</option>
+                                            <option value="1.2">1.2x (Hơi nhanh)</option>
+                                            <option value="1.5">1.5x (Nhanh)</option>
+                                            <option value="2.0">2.0x (Siêu nhanh)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+                                        <span id="currentTime">00:00</span>
+                                        <span id="duration">00:00</span>
+                                    </div>
+                                    <div class="relative h-1.5 bg-slate-800 rounded-full cursor-pointer" id="progressBar">
+                                        <div class="absolute h-full bg-indigo-500 rounded-full" id="progressFill" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Download & Save Metadata -->
+                        <div class="lg:w-72 flex lg:flex-col justify-center space-y-0 space-x-3 lg:space-x-0 lg:space-y-3 w-full border-t lg:border-t-0 lg:border-l border-slate-900 pt-4 lg:pt-0 lg:pl-6">
+                            <a id="downloadWavBtn" href="#" download="gemini_voice.wav" class="flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-850 text-emerald-400 hover:text-emerald-300 font-bold text-sm border border-emerald-500/20 hover:border-emerald-500/40 transition">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Tải File WAV</span>
+                            </a>
+                            <button id="saveToHistoryBtn" class="flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-850 text-indigo-400 hover:text-indigo-300 font-semibold text-sm border border-indigo-500/20 hover:border-indigo-500/40 transition">
+                                <i class="fa-solid fa-box-archive"></i>
+                                <span>Lưu Vào Lịch Sử</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HISTORY / ARCHIVE CONTAINER -->
+                <div class="bg-slate-900/20 border border-slate-900 p-6 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-base font-bold text-slate-300 flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+                            <span>Lịch sử sáng tạo gần đây</span>
+                        </h2>
+                        <button id="clearHistoryBtn" class="text-xs text-slate-500 hover:text-red-400 transition">Xóa sạch lịch sử</button>
+                    </div>
+                    
+                    <div id="historyList" class="space-y-3 max-h-60 overflow-y-auto">
+                        <!-- Populated by JS -->
+                        <div class="text-center py-6 text-slate-500 text-xs italic">
+                            Chưa có file âm thanh nào được tạo. Tạo file đầu tiên để lưu trữ lịch sử!
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- NOTIFICATION SYSTEM -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <script>
+        // --- CONSTANTS & CONFIGURATION FOR MANDARIN STUDY ---
+        const GEMINI_VOICES = [
+            { id: "Charon", gender: "Nam", tone: "Trầm ấm & Trưởng thành (成熟沉稳)", desc: "Giọng nam trầm ấm, chín chắn, phát âm cực chuẩn, phù hợp luyện nghe bài khóa hoặc thuyết trình." },
+            { id: "Zephyr", gender: "Nữ", tone: "Trẻ trung & Năng động (活泼阳光)", desc: "Giọng nữ năng động, tươi sáng, lý tưởng để học khẩu ngữ giao tiếp hằng ngày." },
+            { id: "Puck", gender: "Nam", tone: "Trẻ trung & Tinh nghịch (顽皮俏皮)", desc: "Giọng nam năng động, vui tươi, tốc độ tự nhiên, cực tốt để luyện nghe đời sống." },
+            { id: "Kore", gender: "Nữ", tone: "Nghiêm túc & Trực quan (严肃严谨)", desc: "Giọng nữ chuẩn mực sư phạm, phát âm tròn vành rõ chữ, phù hợp luyện thi HSK chính quy." },
+            { id: "Fenrir", gender: "Nam", tone: "Cuốn hút & Nhiệt huyết (磁性富有魅力)", desc: "Giọng nam đầy sức hút, truyền cảm, thích hợp để luyện đọc diễn cảm, kể chuyện." },
+            { id: "Leda", gender: "Nữ", tone: "Tinh nghịch & Trẻ con (温柔可爱)", desc: "Giọng nữ trong sáng, siêu dễ thương, tốc độ từ tốn, thích hợp cho trẻ em hoặc người mới học." },
+            { id: "Algenib", gender: "Nam", tone: "Nghiêm túc & Thời sự (新闻播音)", desc: "Giọng nam phát thanh viên, uy nghiêm, phát âm chuẩn chỉ tuyệt đối như bản tin thời sự CCTV." },
+            { id: "Vindemiatrix", gender: "Nữ", tone: "Cuốn hút & Truyền cảm (温暖治愈)", desc: "Giọng nữ dịu ngọt, chữa lành, giàu tình cảm, lý tưởng để nghe kể chuyện, hội thoại." },
+            { id: "Sadaltager", gender: "Nam", tone: "Trực quan & Uyên bác (知性学者)", desc: "Giọng nam học thuật, từ tốn, lý tưởng giải thích ngữ pháp hoặc nghe giảng bài." },
+            { id: "Callirrhoe", gender: "Nữ", tone: "Thư thái & Trưởng thành (悠闲缓和)", desc: "Giọng nữ thư thái, chậm rãi, phát âm rõ từng thanh điệu cho người mới bắt đầu học Pinyin." }
+        ];
+
+        let castList = [
+            { id: "speaker-1", name: "Thầy Lý (李老师)", voice: "Charon", tone: "serious", speed: 1.0 },
+            { id: "speaker-2", name: "Tiểu Minh (小明)", voice: "Leda", tone: "playful", speed: 1.1 }
+        ];
+
+        // Default Script dialogue (YCT Lesson 1-7 scenarios / Chinese learning scenario HSK)
+        let scriptLines = [
+            { id: "line-1", speakerId: "speaker-1", text: "小明，你今天几点起床？" },
+            { id: "line-2", speakerId: "speaker-2", text: "李老师，我今天早上七点半起床。" },
+            { id: "line-3", speakerId: "speaker-1", text: "很好，明天我们八点在上课，不要迟到。" },
+            { id: "line-4", speakerId: "speaker-2", text: "我知道了！谢谢老师，明天见！" }
+        ];
+
+        let db;
+        const DB_NAME = "GeminiVoiceStudioDB_v2";
+        const STORE_NAME = "audio_history";
+
+        let currentMode = 'single'; // 'single' or 'dialogue'
+        let currentAudioBlob = null;
+        let audioContext = null;
+        let analyser = null;
+        let visualizerAnimationFrame = null;
+
+        // Init IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onerror = (e) => reject(e);
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+                    }
+                };
+            });
+        }
+
+        // Save record to DB
+        async function saveRecord(record) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], "readwrite");
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.add(record);
+                request.onsuccess = () => resolve(true);
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        // Get all history
+        async function loadHistory() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], "readonly");
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = (e) => {
+                    const list = e.target.result;
+                    list.sort((a, b) => b.timestamp - a.timestamp);
+                    resolve(list);
+                };
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        // Delete item from DB
+        async function deleteHistoryItem(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], "readwrite");
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve(true);
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        // Clear all history
+        async function clearHistoryFromDb() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], "readwrite");
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.clear();
+                request.onsuccess = () => resolve(true);
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        // Convert Base64 back to raw binary data array buffer
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // Write String helper for Wave header creation
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        // Build standard WAV wrapper from Raw 16-bit PCM (Mono)
+        function pcmToWav(pcm16, sampleRate) {
+            const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+            const view = new DataView(buffer);
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM - Integer
+            view.setUint16(22, 1, true); // Mono (1 Channel)
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16.length * 2, true);
+
+            for (let i = 0; i < pcm16.length; i++) {
+                view.setInt16(44 + i * 2, pcm16[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        // Custom Beautiful Toast Message implementation
+        function showToast(message, type = "info") {
+            const container = document.getElementById("toastContainer");
+            const toast = document.createElement("div");
+            
+            let bgClass = "bg-slate-900 border-indigo-500/30 text-indigo-200";
+            let iconClass = "fa-info-circle text-indigo-400";
+            if (type === "success") {
+                bgClass = "bg-slate-900 border-emerald-500/30 text-emerald-200";
+                iconClass = "fa-check-circle text-emerald-400";
+            } else if (type === "error") {
+                bgClass = "bg-slate-900 border-rose-500/30 text-rose-200";
+                iconClass = "fa-triangle-exclamation text-rose-400";
+            }
+            
+            toast.className = `flex items-center space-x-3 px-4 py-3 rounded-xl border ${bgClass} shadow-2xl transition duration-300 transform translate-y-2 opacity-0 pointer-events-auto max-w-sm`;
+            toast.innerHTML = `
+                <i class="fa-solid ${iconClass} text-lg"></i>
+                <span class="text-xs font-medium">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove("translate-y-2", "opacity-0");
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-[-10px]");
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 4000);
+        }
+
+        // Main function calling Gemini API to convert TTS with custom speeds and tones
+        async function fetchGeminiTTS(textPrompt, voiceName, toneName, isMultiSpeaker = false, speakersConfig = []) {
+            const customKey = document.getElementById("customApiKey").value.trim();
+            const apiKey = customKey || "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+            let finalPrompt = textPrompt;
+            if (!isMultiSpeaker) {
+                // Get Tone Guideline
+                const selectEl = document.getElementById("singleToneSelect");
+                const option = selectEl.options[selectEl.selectedIndex];
+                let toneGuideline = option.getAttribute("data-prompt") || "Read standard";
+                if (toneName === 'custom') {
+                    toneGuideline = document.getElementById("customToneInput").value.trim() || "Read in clear Standard Mandarin";
+                }
+
+                // Parse Speed Guideline to prompt context
+                const speedVal = parseFloat(document.getElementById("singleSpeedRange").value);
+                let speedGuideline = "natural normal speed";
+                if (speedVal <= 0.7) {
+                    speedGuideline = "extremely slow, deliberate speed with very long pauses between words to help beginners analyze standard Pǔtōnghuà tones";
+                } else if (speedVal <= 0.9) {
+                    speedGuideline = "a calm and slightly slow speaking pace for active listening comprehension";
+                } else if (speedVal >= 1.3) {
+                    speedGuideline = "a very natural, rapid and fast conversational pace of a native speaker";
+                } else if (speedVal >= 1.1) {
+                    speedGuideline = "a slightly fast and energetic pace";
+                }
+
+                finalPrompt = `Instruction on emotion and vocal delivery for Chinese Mandarin: ${toneGuideline}.\nSpeed rate instruction: Speak at an ${speedGuideline}.\nText content to synthesize: ${textPrompt}`;
+            }
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: finalPrompt }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"]
+                }
+            };
+
+            // Inject Multi-Speaker configurations with custom speeds
+            if (isMultiSpeaker) {
+                const speakerConfigsMapped = speakersConfig.map(sp => {
+                    return {
+                        speaker: sp.name,
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: sp.voice }
+                        }
+                    };
+                });
+
+                payload.generationConfig.speechConfig = {
+                    multiSpeakerVoiceConfig: {
+                        speakerVoiceConfigs: speakerConfigsMapped
+                    }
+                };
+            } else {
+                // Single speaker voice configuration
+                payload.generationConfig.speechConfig = {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: voiceName }
+                    }
+                };
+            }
+
+            let delay = 1000;
+            const maxRetries = 4;
+            
+            for (let i = 0; i <= maxRetries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        throw new Error(`HTTP error ${response.status}: ${errText}`);
+                    }
+
+                    const result = await response.json();
+                    const part = result?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+                    const mimeType = part?.inlineData?.mimeType;
+
+                    if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                        let sampleRate = 24000;
+                        const match = mimeType.match(/rate=(\d+)/);
+                        if (match && match[1]) {
+                            sampleRate = parseInt(match[1], 10);
+                        }
+                        return { audioData, sampleRate, mimeType };
+                    } else {
+                        throw new Error("Không thể tìm thấy dữ liệu âm thanh hợp lệ trong kết quả trả về từ Gemini API.");
+                    }
+                } catch (error) {
+                    if (i === maxRetries) {
+                        throw error;
+                    }
+                    console.log(`Đang thử lại cuộc gọi API do gặp lỗi (${error.message}). Thử lại sau ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        // POPULATE UI DROPDOWNS & INITIALIZE DOM
+        function setupUI() {
+            const singleVoiceSelect = document.getElementById("singleVoiceSelect");
+            
+            GEMINI_VOICES.forEach(voice => {
+                const opt = document.createElement("option");
+                opt.value = voice.id;
+                opt.textContent = `${voice.id} (${voice.gender} - ${voice.tone})`;
+                singleVoiceSelect.appendChild(opt);
+            });
+
+            const updateVoiceDesc = () => {
+                const selectedId = singleVoiceSelect.value;
+                const match = GEMINI_VOICES.find(v => v.id === selectedId);
+                if (match) {
+                    document.getElementById("voiceDesc").textContent = match.desc;
+                }
+            };
+            singleVoiceSelect.addEventListener("change", updateVoiceDesc);
+            updateVoiceDesc(); // call first time
+
+            const singleToneSelect = document.getElementById("singleToneSelect");
+            singleToneSelect.addEventListener("change", () => {
+                const customToneCont = document.getElementById("customToneContainer");
+                if (singleToneSelect.value === 'custom') {
+                    customToneCont.classList.remove("hidden");
+                } else {
+                    customToneCont.classList.add("hidden");
+                }
+            });
+
+            // Single Speech Range slider event
+            const singleSpeedRange = document.getElementById("singleSpeedRange");
+            singleSpeedRange.addEventListener("input", (e) => {
+                document.getElementById("singleSpeedVal").textContent = `${parseFloat(e.target.value).toFixed(1)}x`;
+            });
+
+            const textarea = document.getElementById("singleText");
+            textarea.addEventListener("input", () => {
+                document.getElementById("charCount").textContent = `${textarea.value.length} / 5000 ký tự`;
+            });
+
+            document.getElementById("tabSingle").addEventListener("click", () => {
+                setTabMode('single');
+            });
+            document.getElementById("tabDialogue").addEventListener("click", () => {
+                setTabMode('dialogue');
+            });
+
+            document.getElementById("addSpeakerBtn").addEventListener("click", () => {
+                addNewSpeaker();
+            });
+
+            document.getElementById("addLineBtn").addEventListener("click", () => {
+                addNewLine();
+            });
+
+            document.getElementById("clearDialogueBtn").addEventListener("click", () => {
+                scriptLines = [];
+                renderDialogueLines();
+                showToast("Đã dọn dẹp sạch kịch bản hội thoại.", "info");
+            });
+
+            document.getElementById("toggleSettings").addEventListener("click", (e) => {
+                e.stopPropagation();
+                const drop = document.getElementById("settingsDropdown");
+                drop.classList.toggle("hidden");
+            });
+            document.addEventListener("click", () => {
+                document.getElementById("settingsDropdown").classList.add("hidden");
+            });
+            document.getElementById("settingsDropdown").addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+
+            document.getElementById("generateBtn").addEventListener("click", () => {
+                handleGenerateTTS();
+            });
+
+            document.getElementById("clearHistoryBtn").addEventListener("click", async () => {
+                if (confirm("Bạn có chắc chắn muốn xóa tất cả lịch sử đã lưu không?")) {
+                    await clearHistoryFromDb();
+                    renderHistoryList();
+                    showToast("Lịch sử lưu trữ đã được dọn sạch.", "success");
+                }
+            });
+
+            renderSpeakers();
+            renderDialogueLines();
+        }
+
+        // Toggle Workspace Panels state
+        function setTabMode(mode) {
+            currentMode = mode;
+            const tSingle = document.getElementById("tabSingle");
+            const tDialogue = document.getElementById("tabDialogue");
+            const pSingle = document.getElementById("panelSingle");
+            const pDialogue = document.getElementById("panelDialogue");
+
+            if (mode === 'single') {
+                tSingle.className = "flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg bg-indigo-600 text-white font-medium text-sm transition shadow shadow-indigo-600/30";
+                tDialogue.className = "flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg text-slate-400 hover:text-white font-medium text-sm transition";
+                pSingle.classList.remove("hidden");
+                pDialogue.classList.add("hidden");
+            } else {
+                tDialogue.className = "flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg bg-pink-600 text-white font-medium text-sm transition shadow shadow-pink-600/30";
+                tSingle.className = "flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg text-slate-400 hover:text-white font-medium text-sm transition";
+                pDialogue.classList.remove("hidden");
+                pSingle.classList.add("hidden");
+            }
+        }
+
+        // --- DIALOGUE MODE LOGICS ---
+
+        // Render speaker chips
+        function renderSpeakers() {
+            const container = document.getElementById("speakersContainer");
+            container.innerHTML = "";
+
+            castList.forEach((speaker) => {
+                const card = document.createElement("div");
+                card.className = "p-4 bg-slate-950 border border-slate-850 rounded-xl relative hover:border-slate-700 transition";
+                
+                let voiceOptionsHtml = "";
+                GEMINI_VOICES.forEach(v => {
+                    const isSel = v.id === speaker.voice ? 'selected' : '';
+                    voiceOptionsHtml += `<option value="${v.id}" ${isSel}>${v.id} (${v.gender})</option>`;
+                });
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-slate-300">
+                                <i class="fa-solid fa-user-gear"></i>
+                            </span>
+                            <input type="text" value="${speaker.name}" data-speaker-id="${speaker.id}" class="speaker-name-input font-bold text-sm bg-transparent border-b border-transparent focus:border-pink-500 focus:outline-none text-slate-200 w-32">
+                        </div>
+                        <button onclick="removeSpeaker('${speaker.id}')" class="text-slate-500 hover:text-red-400 p-1 rounded-md transition text-xs">
+                            <i class="fa-solid fa-user-minus"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 uppercase font-semibold mb-1">Giọng nói</label>
+                            <select onchange="updateSpeakerVoice('${speaker.id}', this.value)" class="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-300 focus:outline-none focus:border-pink-500">
+                                ${voiceOptionsHtml}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 uppercase font-semibold mb-1">Cá tính âm sắc</label>
+                            <select onchange="updateSpeakerTone('${speaker.id}', this.value)" class="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-300 focus:outline-none focus:border-pink-500">
+                                <option value="default" ${speaker.tone === 'default' ? 'selected' : ''}>Mặc định (Tự nhiên)</option>
+                                <option value="excited" ${speaker.tone === 'excited' ? 'selected' : ''}>Năng động (Huópō)</option>
+                                <option value="whisper" ${speaker.tone === 'whisper' ? 'selected' : ''}>Thì thầm (Gentle)</option>
+                                <option value="serious" ${speaker.tone === 'serious' ? 'selected' : ''}>Nghiêm túc (Yánsù)</option>
+                                <option value="playful" ${speaker.tone === 'playful' ? 'selected' : ''}>Tinh nghịch (Wánpí)</option>
+                                <option value="warm" ${speaker.tone === 'warm' ? 'selected' : ''}>Trầm ấm (Chénshú)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 uppercase font-semibold mb-1">Tốc độ sinh thoại</label>
+                            <div class="flex items-center space-x-2 bg-slate-900 border border-slate-800 rounded px-2 py-1">
+                                <input type="range" oninput="updateSpeakerSpeed('${speaker.id}', this.value)" min="0.5" max="1.8" step="0.1" value="${speaker.speed || 1.0}" 
+                                    class="flex-1 accent-pink-500 h-1 bg-slate-800 rounded appearance-none cursor-pointer">
+                                <span id="sp-speed-val-${speaker.id}" class="text-[10px] font-mono font-semibold text-pink-400 w-8 text-right">${(speaker.speed || 1.0).toFixed(1)}x</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.querySelectorAll(".speaker-name-input").forEach(input => {
+                input.addEventListener("input", (e) => {
+                    const sId = e.target.getAttribute("data-speaker-id");
+                    const sp = castList.find(c => c.id === sId);
+                    if (sp) {
+                        sp.name = e.target.value.trim() || "Bán danh";
+                    }
+                    updateLinesSelectDropdowns();
+                });
+            });
+        }
+
+        // Add brand new speaker row
+        function addNewSpeaker() {
+            const nextIndex = castList.length + 1;
+            const fallbackVoice = GEMINI_VOICES[Math.floor(Math.random() * GEMINI_VOICES.length)].id;
+            
+            castList.push({
+                id: `speaker-${Date.now()}`,
+                name: `Nhân vật ${nextIndex}`,
+                voice: fallbackVoice,
+                tone: "default",
+                speed: 1.0
+            });
+            renderSpeakers();
+            updateLinesSelectDropdowns();
+            showToast("Đã bổ sung nhân vật mới vào dàn cast.", "success");
+        }
+
+        // Remove speaker
+        window.removeSpeaker = function(id) {
+            if (castList.length <= 1) {
+                showToast("Bạn phải giữ lại ít nhất 1 nhân vật trong kịch bản.", "error");
+                return;
+            }
+            castList = castList.filter(s => s.id !== id);
+            scriptLines = scriptLines.filter(line => line.speakerId !== id);
+            renderSpeakers();
+            renderDialogueLines();
+            showToast("Đã xóa nhân vật khỏi danh sách.", "info");
+        };
+
+        window.updateSpeakerVoice = function(speakerId, voiceId) {
+            const sp = castList.find(s => s.id === speakerId);
+            if (sp) {
+                sp.voice = voiceId;
+            }
+        };
+
+        window.updateSpeakerTone = function(speakerId, toneVal) {
+            const sp = castList.find(s => s.id === speakerId);
+            if (sp) {
+                sp.tone = toneVal;
+            }
+        };
+
+        window.updateSpeakerSpeed = function(speakerId, speedVal) {
+            const sp = castList.find(s => s.id === speakerId);
+            if (sp) {
+                sp.speed = parseFloat(speedVal);
+                const valEl = document.getElementById(`sp-speed-val-${speakerId}`);
+                if (valEl) valEl.textContent = `${parseFloat(speedVal).toFixed(1)}x`;
+            }
+        };
+
+        // Render dialogue script lines
+        function renderDialogueLines() {
+            const container = document.getElementById("scriptLinesContainer");
+            container.innerHTML = "";
+
+            if (scriptLines.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-500 text-xs italic">
+                        Kịch bản trống rỗng. Hãy nhấn 'Thêm dòng thoại' để bắt đầu cuộc trò chuyện!
+                    </div>
+                `;
+                return;
+            }
+
+            scriptLines.forEach((line, index) => {
+                const div = document.createElement("div");
+                div.className = "flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-3 p-3 bg-slate-950/60 hover:bg-slate-900/50 border border-slate-900 rounded-xl transition";
+                
+                let speakerOpts = "";
+                castList.forEach(sp => {
+                    const isSel = sp.id === line.speakerId ? 'selected' : '';
+                    speakerOpts += `<option value="${sp.id}" ${isSel}>${sp.name}</option>`;
+                });
+
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2 w-full md:w-auto">
+                        <span class="text-xs font-bold text-slate-500 w-6">${index + 1}.</span>
+                        <select onchange="updateLineSpeaker('${line.id}', this.value)" class="line-speaker-select text-xs bg-slate-900 border border-slate-800 rounded-lg py-2 px-3 text-pink-400 font-semibold focus:outline-none w-44">
+                            ${speakerOpts}
+                        </select>
+                    </div>
+                    <div class="flex-1 w-full">
+                        <input type="text" value="${line.text}" placeholder="Dòng thoại tiếng Trung..." oninput="updateLineText('${line.id}', this.value)" 
+                            class="w-full text-xs bg-slate-900/50 border border-slate-800 focus:border-indigo-500 rounded-lg py-2 px-3 text-slate-200 focus:outline-none">
+                    </div>
+                    <div class="flex space-x-1 self-end md:self-auto">
+                        <button onclick="moveLineUp('${line.id}')" class="p-1.5 text-slate-500 hover:text-white transition text-xs" title="Di chuyển lên">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                        <button onclick="moveLineDown('${line.id}')" class="p-1.5 text-slate-500 hover:text-white transition text-xs" title="Di chuyển xuống">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <button onclick="removeDialogueLine('${line.id}')" class="p-1.5 text-slate-500 hover:text-red-400 transition text-xs" title="Xóa dòng thoại">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateLinesSelectDropdowns() {
+            document.querySelectorAll(".line-speaker-select").forEach((select, selectIndex) => {
+                const currentVal = select.value;
+                select.innerHTML = "";
+                castList.forEach(sp => {
+                    const opt = document.createElement("option");
+                    opt.value = sp.id;
+                    opt.textContent = sp.name;
+                    if (sp.id === currentVal) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            });
+        }
+
+        function addNewLine() {
+            const defSpeakerId = castList[0]?.id || "speaker-1";
+            scriptLines.push({
+                id: `line-${Date.now()}`,
+                speakerId: defSpeakerId,
+                text: ""
+            });
+            renderDialogueLines();
+        }
+
+        window.removeDialogueLine = function(id) {
+            scriptLines = scriptLines.filter(l => l.id !== id);
+            renderDialogueLines();
+        };
+
+        window.updateLineSpeaker = function(lineId, speakerId) {
+            const line = scriptLines.find(l => l.id === lineId);
+            if (line) {
+                line.speakerId = speakerId;
+            }
+        };
+
+        window.updateLineText = function(lineId, textVal) {
+            const line = scriptLines.find(l => l.id === lineId);
+            if (line) {
+                line.text = textVal;
+            }
+        };
+
+        window.moveLineUp = function(lineId) {
+            const index = scriptLines.findIndex(l => l.id === lineId);
+            if (index > 0) {
+                const temp = scriptLines[index];
+                scriptLines[index] = scriptLines[index - 1];
+                scriptLines[index - 1] = temp;
+                renderDialogueLines();
+            }
+        };
+
+        window.moveLineDown = function(lineId) {
+            const index = scriptLines.findIndex(l => l.id === lineId);
+            if (index < scriptLines.length - 1) {
+                const temp = scriptLines[index];
+                scriptLines[index] = scriptLines[index + 1];
+                scriptLines[index + 1] = temp;
+                renderDialogueLines();
+            }
+        };
+
+
+        // --- CORE PROCESSOR: API CALLING & CONVERSION TRIGGER ---
+        async function handleGenerateTTS() {
+            const genBtn = document.getElementById("generateBtn");
+            const genBtnText = document.getElementById("generateBtnText");
+            
+            genBtn.disabled = true;
+            genBtn.classList.add("opacity-75", "cursor-not-allowed");
+            genBtnText.textContent = "Đang liên lạc máy chủ AI phát âm...";
+            showToast("Bắt đầu xử lý cấu trúc âm từ máy chủ AI...", "info");
+
+            try {
+                let textToProcess = "";
+                let voiceId = "";
+                let toneId = "";
+                let isMulti = false;
+                let speakersConfig = [];
+
+                if (currentMode === 'single') {
+                    textToProcess = document.getElementById("singleText").value.trim();
+                    voiceId = document.getElementById("singleVoiceSelect").value;
+                    toneId = document.getElementById("singleToneSelect").value;
+
+                    if (!textToProcess) {
+                        throw new Error("Vui lòng nhập đoạn văn bản tiếng Trung muốn phát âm.");
+                    }
+                } else {
+                    isMulti = true;
+                    if (scriptLines.length === 0) {
+                        throw new Error("Vui lòng thêm ít nhất một câu thoại.");
+                    }
+
+                    const nonTxt = scriptLines.some(l => !l.text.trim());
+                    if (nonTxt) {
+                        throw new Error("Tất cả dòng kịch bản tiếng Trung đều cần được điền chữ.");
+                    }
+
+                    speakersConfig = castList.map(s => ({
+                        name: s.name,
+                        voice: s.voice,
+                        tone: s.tone,
+                        speed: s.speed
+                    }));
+
+                    // Enhancing multi-speaker payload by embedding emotional and speed directives per line
+                    textToProcess = `Instruction: Produce a perfectly clear, standard Chinese Mandarin (普通话) dialogue. Strictly apply the vocal emotions, tone styles, and specified speech rates listed in parentheses for each line to help student practice reactive listening:\n\nScript:`;
+                    
+                    scriptLines.forEach(line => {
+                        const actor = castList.find(s => s.id === line.speakerId);
+                        const actorName = actor ? actor.name : "Speaker";
+                        let styleGuideline = "";
+                        if (actor) {
+                            let toneDesc = "";
+                            switch(actor.tone) {
+                                case 'excited': toneDesc = "high energy, lively, enthusiastic and cheerful"; break;
+                                case 'whisper': toneDesc = "soft, quiet, gentle, whispering"; break;
+                                case 'serious': toneDesc = "highly authoritative, slow, news anchor broadcast, formal"; break;
+                                case 'playful': toneDesc = "cute, happy, bouncy, playful child tone"; break;
+                                case 'warm': toneDesc = "warm, friendly, caring, and comforting"; break;
+                                default: toneDesc = "clear, natural, perfectly articulated standard";
+                            }
+
+                            // Dynamic speed descriptions inside Prompt Guidelines
+                            let speedDesc = "natural normal speed";
+                            const spSpeed = actor.speed || 1.0;
+                            if (spSpeed <= 0.7) speedDesc = "extremely slow, slow-motion pacing with extended pauses between words";
+                            else if (spSpeed <= 0.9) speedDesc = "slightly slower and deliberate tempo for educational comprehension";
+                            else if (spSpeed >= 1.3) speedDesc = "naturally rapid, fluid, and swift conversational speed";
+                            else if (spSpeed >= 1.1) speedDesc = "slightly energetic and fast conversational speed";
+
+                            styleGuideline = `(speak with a ${toneDesc} Mandarin tone at an ${speedDesc})`;
+                        }
+                        textToProcess += `\n${actorName} ${styleGuideline}: ${line.text}`;
+                    });
+                }
+
+                const result = await fetchGeminiTTS(textToProcess, voiceId, toneId, isMulti, speakersConfig);
+                
+                const rawPcmBytes = base64ToArrayBuffer(result.audioData);
+                const pcm16 = new Int16Array(rawPcmBytes);
+                
+                currentAudioBlob = pcmToWav(pcm16, result.sampleRate);
+                const audioUrl = URL.createObjectURL(currentAudioBlob);
+                
+                const mainAudio = document.getElementById("mainAudio");
+                mainAudio.src = audioUrl;
+                mainAudio.load();
+
+                // Reset Playback speed indicator back to default 1.0x when loaded
+                document.getElementById("playbackRateSelect").value = "1.0";
+                mainAudio.playbackRate = 1.0;
+
+                const playingTitle = document.getElementById("playingTitle");
+                const playingMeta = document.getElementById("playingMeta");
+                
+                if (currentMode === 'single') {
+                    const singleSpeedVal = parseFloat(document.getElementById("singleSpeedRange").value).toFixed(1);
+                    playingTitle.textContent = textToProcess.substring(0, 45) + (textToProcess.length > 45 ? "..." : "");
+                    playingMeta.textContent = `Chế độ một giọng • Giọng ${voiceId} • Chuẩn Pǔtōnghuà (${singleSpeedVal}x) • ${result.sampleRate}Hz`;
+                } else {
+                    playingTitle.textContent = "Kịch bản hội thoại tiếng Trung (" + scriptLines.length + " câu thoại)";
+                    playingMeta.textContent = `Chế độ đối thoại • ${castList.length} Nhân vật nói chuyện • Tốc độ mẫu ${result.sampleRate}Hz`;
+                }
+
+                const downloadBtn = document.getElementById("downloadWavBtn");
+                downloadBtn.href = audioUrl;
+                downloadBtn.download = `mandarin_practice_${Date.now()}.wav`;
+
+                document.getElementById("audioOutputSection").classList.remove("hidden");
+                document.getElementById("audioOutputSection").scrollIntoView({ behavior: 'smooth' });
+
+                setupVisualizer();
+                showToast("Sáng tạo giọng tiếng Trung chuẩn thành công!", "success");
+
+            } catch (error) {
+                console.error("Lỗi phát sinh trong quá trình chuyển đổi:", error);
+                showToast(error.message || "Quá trình kết nối API thất bại.", "error");
+            } finally {
+                genBtn.disabled = false;
+                genBtn.classList.remove("opacity-75", "cursor-not-allowed");
+                genBtnText.textContent = "Bắt đầu chuyển giọng đọc";
+            }
+        }
+
+        // --- VISUALIZATION & AUDIO PLAYBACK TRACK LOGIC ---
+        function setupVisualizer() {
+            const mainAudio = document.getElementById("mainAudio");
+            const playPauseBtn = document.getElementById("playPauseBtn");
+            const playPauseIcon = document.getElementById("playPauseIcon");
+            const progressBar = document.getElementById("progressBar");
+            const progressFill = document.getElementById("progressFill");
+            const currentTimeEl = document.getElementById("currentTime");
+            const durationEl = document.getElementById("duration");
+            const playbackRateSelect = document.getElementById("playbackRateSelect");
+
+            playPauseIcon.className = "fa-solid fa-play";
+            progressFill.style.width = "0%";
+
+            const formatTime = (seconds) => {
+                if (isNaN(seconds)) return "00:00";
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            };
+
+            mainAudio.onloadedmetadata = () => {
+                durationEl.textContent = formatTime(mainAudio.duration);
+                mainAudio.playbackRate = parseFloat(playbackRateSelect.value);
+            };
+
+            mainAudio.ontimeupdate = () => {
+                currentTimeEl.textContent = formatTime(mainAudio.currentTime);
+                const percent = (mainAudio.currentTime / mainAudio.duration) * 100;
+                progressFill.style.width = `${percent}%`;
+            };
+
+            mainAudio.onended = () => {
+                playPauseIcon.className = "fa-solid fa-play";
+                if (visualizerAnimationFrame) {
+                    cancelAnimationFrame(visualizerAnimationFrame);
+                    visualizerAnimationFrame = null;
+                }
+            };
+
+            playbackRateSelect.onchange = () => {
+                mainAudio.playbackRate = parseFloat(playbackRateSelect.value);
+                showToast(`Đã thay đổi tốc độ phát âm sang ${playbackRateSelect.value}x`, "info");
+            };
+
+            playPauseBtn.onclick = () => {
+                if (mainAudio.paused) {
+                    mainAudio.playbackRate = parseFloat(playbackRateSelect.value);
+                    mainAudio.play();
+                    playPauseIcon.className = "fa-solid fa-pause";
+                    startVisualization();
+                } else {
+                    mainAudio.pause();
+                    playPauseIcon.className = "fa-solid fa-play";
+                }
+            };
+
+            progressBar.onclick = (e) => {
+                const rect = progressBar.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                mainAudio.currentTime = pos * mainAudio.duration;
+            };
+
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                
+                const source = audioContext.createMediaElementSource(mainAudio);
+                source.connect(analyser);
+                analyser.connect(audioContext.destination);
+            }
+        }
+
+        function startVisualization() {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            const canvas = document.getElementById("visualizerCanvas");
+            const ctx = canvas.getContext("2d");
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            document.getElementById("noVisualizerActive").classList.add("hidden");
+
+            const resizeCanvas = () => {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            };
+            resizeCanvas();
+
+            const draw = () => {
+                visualizerAnimationFrame = requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.fillStyle = '#020617'; 
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const barWidth = (canvas.width / bufferLength) * 1.5;
+                let barHeight;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    barHeight = dataArray[i];
+
+                    const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
+                    gradient.addColorStop(0, '#4f46e5'); // Indigo
+                    gradient.addColorStop(0.5, '#ec4899'); // Pink
+                    gradient.addColorStop(1, '#f43f5e'); // Rose high peak
+
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x, canvas.height - (barHeight / 1.5), barWidth - 2, barHeight / 1.5);
+
+                    x += barWidth;
+                }
+            };
+
+            if (visualizerAnimationFrame) {
+                cancelAnimationFrame(visualizerAnimationFrame);
+            }
+            draw();
+        }
+
+        // --- LOCAL STORAGE HISTORY HANDLERS ---
+        document.getElementById("saveToHistoryBtn").addEventListener("click", async () => {
+            if (!currentAudioBlob) {
+                showToast("Không tìm thấy tệp âm thanh nào để lưu.", "error");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(currentAudioBlob);
+            reader.onloadend = async () => {
+                const base64Audio = reader.result;
+                
+                let textExcerpt = "";
+                let details = "";
+                
+                if (currentMode === 'single') {
+                    const text = document.getElementById("singleText").value.trim();
+                    textExcerpt = text.substring(0, 60) + (text.length > 60 ? "..." : "");
+                    const singleSpeedVal = parseFloat(document.getElementById("singleSpeedRange").value).toFixed(1);
+                    details = `Phát âm đơn • Giọng ${document.getElementById("singleVoiceSelect").value} • Tốc độ AI: ${singleSpeedVal}x`;
+                } else {
+                    textExcerpt = `Đối thoại tiếng Trung (${scriptLines.length} câu thoại)`;
+                    details = `Thành viên: ${castList.map(c => `${c.name} (${c.speed}x)`).join(", ")}`;
+                }
+
+                const newRecord = {
+                    title: textExcerpt,
+                    meta: details,
+                    audioData: base64Audio,
+                    timestamp: Date.now()
+                };
+
+                await saveRecord(newRecord);
+                showToast("Đã lưu phát âm luyện nghe vào lịch sử học tập!", "success");
+                renderHistoryList();
+            };
+        });
+
+        // Re-display historical creation elements
+        async function renderHistoryList() {
+            const listEl = document.getElementById("historyList");
+            listEl.innerHTML = "";
+
+            try {
+                const items = await loadHistory();
+                
+                if (items.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="text-center py-6 text-slate-500 text-xs italic">
+                            Chưa có file âm thanh luyện nghe nào được lưu. Tạo file ngay nhé!
+                        </div>
+                    `;
+                    return;
+                }
+
+                items.forEach(item => {
+                    const block = document.createElement("div");
+                    block.className = "flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-850 hover:border-indigo-900/60 transition";
+                    
+                    const timeStr = new Date(item.timestamp).toLocaleString("vi-VN", {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit'
+                    });
+
+                    block.innerHTML = `
+                        <div class="flex-1 pr-4">
+                            <h4 class="text-xs font-bold text-slate-200">${item.title}</h4>
+                            <p class="text-[10px] text-slate-400 mt-1">${item.meta} • <span class="text-indigo-400 font-medium">${timeStr}</span></p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="playHistoryItem('${item.id}')" class="p-2 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg text-xs transition" title="Mở phát file">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                            <button onclick="deleteHistoryItemFromUi(${item.id})" class="p-2 bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-400 rounded-lg text-xs transition" title="Xóa lịch sử">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    `;
+                    listEl.appendChild(block);
+                });
+            } catch (err) {
+                console.error("Lỗi khi tải lịch sử:", err);
+            }
+        }
+
+        window.playHistoryItem = async function(id) {
+            const numId = parseInt(id, 10);
+            const transaction = db.transaction([STORE_NAME], "readonly");
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(numId);
+            
+            request.onsuccess = (e) => {
+                const record = e.target.result;
+                if (record) {
+                    const fetchAudioData = fetch(record.audioData);
+                    fetchAudioData
+                        .then(res => res.blob())
+                        .then(blob => {
+                            currentAudioBlob = blob;
+                            const audioUrl = URL.createObjectURL(blob);
+                            const mainAudio = document.getElementById("mainAudio");
+                            mainAudio.src = audioUrl;
+                            mainAudio.load();
+
+                            document.getElementById("playingTitle").textContent = record.title;
+                            document.getElementById("playingMeta").textContent = `${record.meta} (Lịch sử phát)`;
+                            
+                            const downloadBtn = document.getElementById("downloadWavBtn");
+                            downloadBtn.href = audioUrl;
+                            downloadBtn.download = `voice_restored_${Date.now()}.wav`;
+
+                            document.getElementById("audioOutputSection").classList.remove("hidden");
+                            document.getElementById("audioOutputSection").scrollIntoView({ behavior: 'smooth' });
+
+                            setupVisualizer();
+                            showToast("Đã tải lại phát âm lịch sử.", "success");
+                        });
+                }
+            };
+        };
+
+        window.deleteHistoryItemFromUi = async function(id) {
+            await deleteHistoryItem(id);
+            renderHistoryList();
+            showToast("Đã xóa tệp lịch sử khỏi kho học tập.", "info");
+        };
+
+        // --- LIFECYCLE WINDOW STARTUP ---
+        window.onload = async function() {
+            try {
+                await initDB();
+                setupUI();
+                await renderHistoryList();
+                showToast("Chào mừng đến với Studio Phát Âm Tiếng Trung v2!", "success");
+            } catch (e) {
+                console.error("Lỗi khởi tạo ứng dụng:", e);
+                showToast("Khởi tạo hệ thống lưu trữ thất bại. Bạn vẫn có thể dùng công cụ bình thường.", "error");
+                setupUI();
+            }
+        };
+
+    </script>
+</body>
+</html>
+```
+eof
+
+### Điểm mới nổi bật của phiên bản v2 này:
+1. **Phân loại Giọng đọc sắc nét hơn:** Danh sách `GEMINI_VOICES` được mở rộng thêm các từ khóa biểu thị trực quan như *Nữ Trẻ trung & Năng động (Zephyr)*, *Nam Trầm ấm & Trưởng thành (Charon)*, *Nam Nghiêm túc & Thời sự (Algenib)*, v.v.
+2. **AI Rate (Tốc độ từ mô hình AI):**
+   - Khi bạn kéo thanh **AI Rate** ở chế độ đơn lẻ, ứng dụng sẽ tự động phân tích và tạo ra câu lệnh dẫn dắt chi tiết gửi lên Gemini (ví dụ: *"Speak at an extremely slow deliberate speed..."* nếu kéo về 0.5x - 0.7x).
+   - Nhờ đó, AI sẽ tự động điều chỉnh khoảng nghỉ giữa các chữ, phát âm rõ ràng, chuẩn thanh điệu 1, 2, 3, 4 để người mới bắt đầu dễ học.
+3. **Dialogue Multi-Speed (Tốc độ thoại riêng biệt):**
+   - Trong thẻ quản lý nhân vật, bạn có thể chỉnh tốc độ sinh âm riêng biệt cho từng người.
+   - Thầy Lý (giọng nghiêm túc, phát âm chậm 0.8x) và Tiểu Minh (giọng tinh nghịch, phát âm nhanh 1.2x) sẽ đối đáp một cách vô cùng tự nhiên trong cùng một file ghi âm duy nhất.
+4. **Playback Rate (Điều chỉnh tốc độ ngay trên Trình phát):**
+   - Bộ chọn **Tốc độ phát âm** tích hợp ngay dưới biểu đồ sóng âm cho phép thay đổi tức thì tốc độ chạy (0.5x, 0.75x, 1.0x, 1.2x, 1.5x, 2.0x) mà không tốn công yêu cầu mô hình sinh âm lại, giúp bạn tiết kiệm thời gian luyện nghe.
